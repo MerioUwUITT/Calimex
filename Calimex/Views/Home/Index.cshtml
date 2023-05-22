@@ -1,0 +1,262 @@
+﻿@{
+    ViewBag.Title = "Catalogo";
+}
+
+@model List<Calimex.Models.Producto>
+<style>
+    .product-image {
+        width: 300px;
+        height: 300px;
+        object-fit: contain;
+    }
+
+    .sidebara {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 200px;
+        background-color: #f5f5f5;
+        padding: 20px;
+    }
+
+    .sidebarb {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 300px;
+        background-color: #f5f5f5;
+        padding: 20px;
+    }
+
+    .main-content {
+        margin-top: 20px;
+    }
+    .sidebarb table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .sidebarb th,
+    .sidebarb td {
+        padding: 8px;
+        text-align: left;
+        vertical-align: middle;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .sidebarb th {
+        font-weight: bold;
+    }
+    .btn-group-vertical .btn.active {
+        background-color: #007bff;
+        color: #fff;
+    }
+
+    .btn-group-vertical .btn:hover {
+        background-color: #f8f9fa;
+    }
+    .category-filter-container {
+        padding: 0 5px; /* Agrega 5 pixeles de padding a la izquierda y derecha de la barra lateral*/
+    }
+
+    .category-filter {
+        max-width: 100%; /* Establece un ancho máximo para los botones de categoría */
+        margin: 0 auto; /* Centra los botones de categoría horizontalmente */
+    }
+
+</style>
+
+
+<div class="row">
+    <div class="col-md-3 sidebara">
+        <h4>Filtrar por categoría</h4>
+        <div class="btn-group-vertical category-filter-container">
+            <button type="button" class="btn btn-outline-primary active category-filter" data-category="">Todos</button>
+            @foreach (var category in Model.Select(p => p.Categoria_producto).Distinct())
+            {
+                <button type="button" class="btn btn-outline-primary category-filter" data-category="@category.nombre">@category.nombre</button>
+            }
+        </div>
+    </div>
+    <div class="col-md-12 main-content">
+        @foreach (var product in Model)
+        {
+            <div class="col-md-4">
+                <div class="product-block" data-category="@product.Categoria_producto.nombre">
+                    <img src="@Url.Content(string.Format("~/Content/Images/{0:D3}.jpg", product.imagen))" class="product-image" />
+                    <h4>@product.nombre</h4>
+                    <p>@product.descripcion</p>
+                    <p>Precio: $@product.precio</p>
+                    <div>
+                        <button class="btn btn-primary add-to-cart" data-id="@product.id_producto">Agregar al carrito</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+    <div class="col-md-3 sidebarb">
+        <h4>Carrito</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio</th>
+
+                </tr>
+            </thead>
+            <tbody id="cart-items">
+                <!-- Los elementos del carrito se agregarán aquí -->
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td><strong>Total:</strong></td>
+                    <td id="cart-total"></td>
+                </tr>
+            </tfoot>
+        </table>
+        <button id="realizar-compra" class="btn btn-success" disabled="disabled">Realizar Compra</button>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+    var productos = []; // Nuevo arreglo para almacenar los objetos de los productos
+
+    $(function () {
+        // Recorrer el modelo de productos y agregar cada objeto de producto al array de productos
+        @foreach (var product in Model)
+        {
+            <text>
+                productos.push({
+                    id: '@product.id_producto',
+                    nombre: '@product.nombre',
+                    precio: @product.precio
+                });
+            </text>
+        }
+
+        // Agregar evento click a los enlaces de categoría
+        $('.category-filter').click(function (e) {
+            e.preventDefault();
+
+            // Activar el botón de categoría seleccionado y desactivar los demás
+            $(this).addClass('active').siblings().removeClass('active');
+
+            var category = $(this).data('category');
+            if (category === '') {
+                // Mostrar todos los productos
+                $('.product-block').show();
+            } else {
+                // Ocultar productos que no coinciden con la categoría seleccionada
+                $('.product-block').hide().filter(function () {
+                    return $(this).data('category') === category;
+                }).show();
+            }
+        });
+
+        var carrito = [];
+
+        // Agregar evento click al botón "Agregar al carrito"
+        $('.add-to-cart').click(function (e) {
+            e.preventDefault();
+            var id = $(this).data('id');
+
+            // Buscar el objeto de producto correspondiente en el array de productos utilizando el id del producto seleccionado
+            var producto = productos.find(function (p) {
+                return p.id === id.toString();
+            });
+
+            // Buscar si el producto ya está en el carrito
+            var itemEnCarrito = carrito.find(function (i) {
+                return i.id === producto.id;
+            });
+
+            if (itemEnCarrito) {
+                // Si el producto ya está en el carrito, aumentar la cantidad en 1
+                itemEnCarrito.quantity++;
+            } else {
+                // Si el producto no está en el carrito, agregarlo con una cantidad de 1
+                carrito.push({
+                    id: producto.id,
+                    nombre: producto.nombre,
+                    precio: producto.precio,
+                    quantity: 1
+                });
+            }
+
+            // Ordenar el arreglo por ID
+            carrito.sort(function (a, b) {
+                return a.id - b.id;
+            });
+
+            // Actualizar la visualización del carrito en el sidebar
+            actualizarCarrito();
+        });
+
+        function actualizarCarrito() {
+            $('#cart-items').empty();
+            var total = 0;
+            carrito.forEach(function (item) {
+
+                var tr = $('<tr>');
+                var tdProducto = $('<td>').text(item.nombre);
+                var tdCantidad = $('<td>').text(item.quantity);
+                var tdPrecio = $('<td>').text('$' + (item.precio * item.quantity).toFixed(2));
+
+
+                tr.hover(function () {
+                    $(this).css('background-color', '#f8f9fa');
+                }, function () {
+                    $(this).css('background-color', '');
+                });
+                tr.click(function () {
+                    carrito = carrito.filter(function (i) {
+                        return i.id !== item.id;
+                    });
+                    actualizarCarrito();
+                });
+                tr.append(tdProducto, tdCantidad, tdPrecio);
+                $('#cart-items').append(tr);
+                total += item.precio * item.quantity;
+            });
+            $('#cart-total').text('$' + total.toFixed(2));
+            if (carrito.length > 0) {
+                $('#realizar-compra').prop('disabled', false);
+            } else {
+                $('#realizar-compra').prop('disabled', true);
+            }
+        }
+        $(function () {
+            // Código para inicializar el carrito y los eventos de los botones
+
+            $('#realizar-compra').click(function () {
+                var ids = [];
+                var cantidades = [];
+
+                // Recorrer los elementos del carrito y agregar sus IDs y cantidades a los arreglos correspondientes
+                carrito.forEach(function (item) {
+                    ids.push(item.id);
+                    cantidades.push(item.quantity);
+                });
+
+                // Enviar los datos de la compra al servidor utilizando AJAX
+                $.ajax({
+                    type: 'POST',
+                    url: '/Home/RealizarVenta',
+                    data: { ids: ids, cantidades: cantidades },
+                    success: function (result) {
+                        location.href = "../home/Tickets";
+                    },
+                    error: function () {
+                        // Hacer algo en caso de que ocurra un error
+                    }
+                });
+            });
+        });
+    });
+        
+    </script>
+}

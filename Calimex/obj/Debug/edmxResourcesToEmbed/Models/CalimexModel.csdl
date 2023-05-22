@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Schema Namespace="CalimexModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+  <EntityType Name="Categoria_producto">
+    <Key>
+      <PropertyRef Name="id_categoria_producto" />
+    </Key>
+    <Property Name="id_categoria_producto" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="nombre" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+    <Property Name="descripcion" Type="String" MaxLength="200" FixedLength="false" Unicode="false" />
+    <NavigationProperty Name="Productoes" Relationship="Self.fk_id_categoria_producto" FromRole="Categoria_producto" ToRole="Producto" />
+  </EntityType>
+  <EntityType Name="Producto">
+    <Key>
+      <PropertyRef Name="id_producto" />
+    </Key>
+    <Property Name="id_producto" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="id_categoria_producto" Type="Int32" Nullable="false" />
+    <Property Name="nombre" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+    <Property Name="descripcion" Type="String" MaxLength="100" FixedLength="false" Unicode="false" />
+    <Property Name="imagen" Type="Int32" />
+    <Property Name="precio" Type="Decimal" Precision="10" Scale="2" />
+    <Property Name="activo" Type="Boolean" />
+    <NavigationProperty Name="Categoria_producto" Relationship="Self.fk_id_categoria_producto" FromRole="Producto" ToRole="Categoria_producto" />
+    <NavigationProperty Name="VentaProductoes" Relationship="Self.fk_VentaProducto_Producto" FromRole="Producto" ToRole="VentaProducto" />
+  </EntityType>
+  <EntityType Name="Venta">
+    <Key>
+      <PropertyRef Name="id_venta" />
+    </Key>
+    <Property Name="id_venta" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="fecha_venta" Type="DateTime" Precision="0" />
+    <NavigationProperty Name="VentaProductoes" Relationship="Self.fk_VentaProducto_Venta" FromRole="Venta" ToRole="VentaProducto" />
+  </EntityType>
+  <EntityType Name="VentaProducto">
+    <Key>
+      <PropertyRef Name="id_venta" />
+      <PropertyRef Name="id_producto" />
+    </Key>
+    <Property Name="id_venta" Type="Int32" Nullable="false" />
+    <Property Name="id_producto" Type="Int32" Nullable="false" />
+    <Property Name="cantidad" Type="Int32" Nullable="false" />
+    <NavigationProperty Name="Producto" Relationship="Self.fk_VentaProducto_Producto" FromRole="VentaProducto" ToRole="Producto" />
+    <NavigationProperty Name="Venta" Relationship="Self.fk_VentaProducto_Venta" FromRole="VentaProducto" ToRole="Venta" />
+  </EntityType>
+  <Association Name="fk_id_categoria_producto">
+    <End Role="Categoria_producto" Type="Self.Categoria_producto" Multiplicity="1" />
+    <End Role="Producto" Type="Self.Producto" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Categoria_producto">
+        <PropertyRef Name="id_categoria_producto" />
+      </Principal>
+      <Dependent Role="Producto">
+        <PropertyRef Name="id_categoria_producto" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="fk_VentaProducto_Producto">
+    <End Role="Producto" Type="Self.Producto" Multiplicity="1" />
+    <End Role="VentaProducto" Type="Self.VentaProducto" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Producto">
+        <PropertyRef Name="id_producto" />
+      </Principal>
+      <Dependent Role="VentaProducto">
+        <PropertyRef Name="id_producto" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="fk_VentaProducto_Venta">
+    <End Role="Venta" Type="Self.Venta" Multiplicity="1" />
+    <End Role="VentaProducto" Type="Self.VentaProducto" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Venta">
+        <PropertyRef Name="id_venta" />
+      </Principal>
+      <Dependent Role="VentaProducto">
+        <PropertyRef Name="id_venta" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <EntityContainer Name="CalimexContext" annotation:LazyLoadingEnabled="true">
+    <EntitySet Name="Categoria_producto" EntityType="Self.Categoria_producto" />
+    <EntitySet Name="Productoes" EntityType="Self.Producto" />
+    <EntitySet Name="Ventas" EntityType="Self.Venta" />
+    <EntitySet Name="VentaProductoes" EntityType="Self.VentaProducto" />
+    <AssociationSet Name="fk_id_categoria_producto" Association="Self.fk_id_categoria_producto">
+      <End Role="Categoria_producto" EntitySet="Categoria_producto" />
+      <End Role="Producto" EntitySet="Productoes" />
+    </AssociationSet>
+    <AssociationSet Name="fk_VentaProducto_Producto" Association="Self.fk_VentaProducto_Producto">
+      <End Role="Producto" EntitySet="Productoes" />
+      <End Role="VentaProducto" EntitySet="VentaProductoes" />
+    </AssociationSet>
+    <AssociationSet Name="fk_VentaProducto_Venta" Association="Self.fk_VentaProducto_Venta">
+      <End Role="Venta" EntitySet="Ventas" />
+      <End Role="VentaProducto" EntitySet="VentaProductoes" />
+    </AssociationSet>
+  </EntityContainer>
+</Schema>

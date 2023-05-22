@@ -1,0 +1,41 @@
+﻿
+@{
+    ViewBag.Title = "Tickets";
+}
+<h2>Tickets</h2>
+
+@model List<Calimex.Models.Venta>
+
+@foreach (var venta in Model.OrderByDescending(v => v.id_venta))
+{
+    <h2>Venta # @venta.id_venta</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Producto</th>
+                <th>Precio</th>
+                <th>Cantidad</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var detalle in venta.VentaProductoes)
+            {
+                <tr>
+                    <td>@detalle.Producto.id_producto</td>
+                    <td>@detalle.Producto.nombre</td>
+                    <td>@detalle.Producto.precio</td>
+                    <td>@detalle.cantidad</td>
+                    <td>@(detalle.cantidad * detalle.Producto.precio)</td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3">Total:</td>
+                <td>$@(venta.VentaProductoes.Sum(d => d.cantidad * d.Producto.precio)) pesos</td>
+            </tr>
+        </tfoot>
+    </table>
+}
